@@ -36,3 +36,11 @@ func Migrate() {
 	}
 	fmt.Println("table create")
 }
+
+func FetchTaskList() *[]structs.Task {
+	var tasks []structs.Task
+	if err := DB.Order("updated_at desc").Find(&tasks).Error; err != nil {
+		log.Println(err)
+	}
+	return &tasks
+}
