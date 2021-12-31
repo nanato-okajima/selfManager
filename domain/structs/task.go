@@ -9,6 +9,6 @@ import (
 type Task struct {
 	gorm.Model
 	Name        string
-	DueDatetime time.Time
 	Status      int64
+	DueDatetime time.Time
 }

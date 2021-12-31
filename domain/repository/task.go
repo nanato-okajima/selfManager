@@ -44,3 +44,10 @@ func FetchTaskList() *[]structs.Task {
 	}
 	return &tasks
 }
+
+func CreateTask(request *structs.Task) {
+	if err := DB.Create(request); err != nil {
+		log.Println(err)
+	}
+	fmt.Println("success create task")
+}

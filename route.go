@@ -8,4 +8,5 @@ import (
 
 func routeSetting(mux *http.ServeMux) {
 	mux.HandleFunc("/tasks", task.TaskListHandler)
+	mux.HandleFunc("/task/create", task.TaskCreateHandler)
 }
