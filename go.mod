@@ -1,4 +1,4 @@
-module github.com/selfManager
+module selfManager
 
 go 1.16
 

@@ -3,10 +3,11 @@ package main
 import (
 	"net/http"
 
-	"github.com/selfManager/services/task"
+	"selfManager/services/task"
 )
 
 func routeSetting(mux *http.ServeMux) {
 	mux.HandleFunc("/tasks", task.TaskListHandler)
 	mux.HandleFunc("/task/create", task.TaskCreateHandler)
+	mux.HandleFunc("/task/", task.TaskHandler)
 }

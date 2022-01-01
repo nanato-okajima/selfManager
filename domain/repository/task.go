@@ -9,7 +9,7 @@ import (
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 
-	"github.com/selfManager/domain/structs"
+	"selfManager/domain/structs"
 )
 
 var DB *gorm.DB
@@ -50,4 +50,19 @@ func CreateTask(request *structs.Task) {
 		log.Println(err)
 	}
 	fmt.Println("success create task")
+}
+
+func FetchTask(id string) *structs.Task {
+	var task structs.Task
+	if err := DB.First(&task, id); err != nil {
+		log.Println(err)
+	}
+	return &task
+}
+
+func UpdateTask(task *structs.Task, req *structs.Task) {
+	if err := DB.Model(task).Updates(req); err != nil {
+		log.Println(err)
+	}
+	fmt.Println("success update task")
 }
