@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/selfManager/domain/repository"
+	"selfManager/domain/repository"
 )
 
 func main() {
