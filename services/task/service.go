@@ -4,10 +4,13 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"reflect"
 	"strconv"
-	"strings"
 	"text/template"
 	"time"
+
+	"github.com/gorilla/mux"
+	"github.com/gorilla/schema"
 
 	"selfManager/constants"
 	"selfManager/domain/repository"
@@ -23,57 +26,72 @@ func TaskListHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// TaskCreateHandler is task insert db
-func TaskCreateHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method == http.MethodGet {
-		tmp := template.Must(template.ParseFiles(constants.GetTaskDirPath("create"), constants.GetHeaderTemplate(), constants.GetFooterTemplate()))
-		if err := tmp.ExecuteTemplate(w, "create.gtpl", nil); err != nil {
-			log.Println(err)
-		}
-	} else if r.Method == http.MethodPost {
-		status, err := strconv.ParseInt(r.FormValue("status"), 10, 64)
-		if err != nil {
-			fmt.Println(err)
-		}
-		dueDatetime, err := time.Parse(constants.DATE_FORMAT, r.FormValue("due-datetime"))
-		if err != nil {
-			fmt.Println(err)
-		}
-		pr := structs.Task{
-			Name:        r.FormValue("name"),
-			Status:      status,
-			DueDatetime: dueDatetime,
-		}
-		repository.CreateTask(&pr)
-		http.Redirect(w, r, "/tasks", 303)
+func NewTaskHandler(w http.ResponseWriter, r *http.Request) {
+	tmp := template.Must(template.ParseFiles(constants.GetTaskDirPath("create"), constants.GetHeaderTemplate(), constants.GetFooterTemplate()))
+	if err := tmp.ExecuteTemplate(w, "create.gtpl", nil); err != nil {
+		log.Println(err)
 	}
+}
+
+// TaskCreateHandler is task insert db
+func CreateTaskHandler(w http.ResponseWriter, r *http.Request) {
+	status, err := strconv.ParseInt(r.FormValue("status"), 10, 64)
+	if err != nil {
+		fmt.Println(err)
+	}
+	dueDatetime, err := time.Parse(constants.DATE_FORMAT, r.FormValue("due-datetime"))
+	if err != nil {
+		fmt.Println(err)
+	}
+	pr := structs.Task{
+		Name:        r.FormValue("name"),
+		Status:      status,
+		DueDatetime: dueDatetime,
+	}
+	repository.CreateTask(&pr)
+	http.Redirect(w, r, "/tasks", http.StatusSeeOther)
 }
 
 // TaskHandler is Update task handler
 func TaskHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method == http.MethodGet {
-		id := strings.TrimPrefix(r.URL.Path, "/task/")
-		task := repository.FetchTask(id)
-		tmp := template.Must(template.ParseFiles(constants.GetTaskDirPath("edit"), constants.GetHeaderTemplate(), constants.GetFooterTemplate()))
-		if err := tmp.ExecuteTemplate(w, "edit.gtpl", task); err != nil {
-			log.Println(err)
-		}
-	} else if r.Method == http.MethodPost {
-		status, err := strconv.ParseInt(r.FormValue("status"), 10, 64)
-		if err != nil {
-			log.Println(err)
-		}
-		dueDatetime, err := time.Parse(constants.DATE_FORMAT, r.FormValue("due-datetime"))
-		if err != nil {
-			log.Println(err)
-		}
-		id := strings.TrimPrefix(r.URL.Path, "/task/")
-		task := repository.FetchTask(id)
-		repository.UpdateTask(task, &structs.Task{
-			Name:        r.FormValue("name"),
-			Status:      status,
-			DueDatetime: dueDatetime,
-		})
-		http.Redirect(w, r, "/tasks", 303)
+	vars := mux.Vars(r)
+	id := vars["id"]
+	task := repository.FetchTask(id)
+	tmp := template.Must(template.ParseFiles(constants.GetTaskDirPath("edit"), constants.GetHeaderTemplate(), constants.GetFooterTemplate()))
+	if err := tmp.ExecuteTemplate(w, "edit.gtpl", task); err != nil {
+		log.Println(err)
 	}
+}
+
+func UpdateTaskHandler(w http.ResponseWriter, r *http.Request) {
+	err := r.ParseForm()
+	if err != nil {
+		fmt.Println(err)
+	}
+	decorder := schema.NewDecoder()
+	// status, err := strconv.ParseInt(r.FormValue("status"), 10, 64)
+	// if err != nil {
+	// 	log.Println(err)
+	// }
+	decorder.RegisterConverter(time.Time{}, ParseToDateTime)
+	vars := mux.Vars(r)
+	id := vars["id"]
+	// id := strings.TrimPrefix(r.URL.Path, "/task/")
+	task := repository.FetchTask(id)
+	var req structs.Task
+	fmt.Printf("%#v", r.PostForm)
+	err = decorder.Decode(&req, r.PostForm)
+	if err != nil {
+		fmt.Println(err)
+	}
+	repository.UpdateTask(task, &req)
+	http.Redirect(w, r, "/tasks", http.StatusSeeOther)
+}
+
+func ParseToDateTime(str string) reflect.Value {
+	t, err := time.Parse(constants.DATE_FORMAT, str)
+	if err != nil {
+		log.Println(err)
+	}
+	return reflect.ValueOf(t)
 }

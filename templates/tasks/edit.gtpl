@@ -12,7 +12,7 @@
     </div>
     <div>
         <label for="due-datetime">期日</label>
-        <input type="date">
+        <input type="date" name="due-datetime">
     </div>
     <input type="submit">
 </form>

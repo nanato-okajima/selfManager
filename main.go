@@ -6,18 +6,20 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/gorilla/mux"
+
 	"selfManager/domain/repository"
 )
 
 func main() {
-	mux := http.NewServeMux()
-	routeSetting(mux)
+	r := mux.NewRouter()
+	routeSetting(r)
 	server := http.Server{
 		Addr:         ":8000",
 		ReadTimeout:  5 * time.Second,
 		WriteTimeout: 10 * time.Second,
 		IdleTimeout:  120 * time.Second,
-		Handler:      mux,
+		Handler:      r,
 	}
 	repository.Migrate()
 	fmt.Println("Starting web server...")
