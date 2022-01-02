@@ -34,43 +34,52 @@ func Migrate() {
 	if err != nil {
 		log.Println(err)
 	}
+	
 	fmt.Println("table create")
 }
 
-func FetchTaskList() *[]structs.Task {
+func FetchTaskList() (*[]structs.Task, error) {
 	var tasks []structs.Task
 	if err := DB.Order("updated_at desc").Find(&tasks).Error; err != nil {
-		log.Println(err)
+		return nil, err
 	}
-	return &tasks
+
+	return &tasks, nil
 }
 
-func CreateTask(request *structs.Task) {
+func CreateTask(request *structs.Task) error {
 	if err := DB.Create(request); err != nil {
-		log.Println(err)
+		return err
 	}
 	fmt.Println("success create task")
+
+	return nil
 }
 
-func FetchTask(id string) *structs.Task {
+func FetchTask(id string) (*structs.Task, error) {
 	var task structs.Task
 	if err := DB.First(&task, id); err != nil {
-		log.Println(err)
+		return nil, err
 	}
-	return &task
+
+	return &task, nil
 }
 
-func UpdateTask(task *structs.Task, req *structs.Task) {
+func UpdateTask(task *structs.Task, req *structs.Task) error {
 	if err := DB.Model(task).Updates(req); err != nil {
-		log.Println(err)
+		return err
 	}
 	fmt.Println("success update task")
+
+	return nil
 }
 
-func DeleteTask(id string) {
+func DeleteTask(id string) error {
 	var task structs.Task
 	if err := DB.Delete(&task, id); err != nil {
-		log.Println(err)
+		return err
 	}
 	fmt.Println("success delete task")
+
+	return nil
 }
