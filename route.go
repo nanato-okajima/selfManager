@@ -12,4 +12,5 @@ func routeSetting(mux *mux.Router) {
 	mux.HandleFunc("/task/create", task.CreateTaskHandler).Methods("POST")
 	mux.HandleFunc("/task/{id:[0-9]+}", task.TaskHandler).Methods("GET")
 	mux.HandleFunc("/task/{id:[0-9]+}", task.UpdateTaskHandler).Methods("POST")
+	mux.HandleFunc("/task/delete/{id:[0-9]+}", task.TaskDeleteHandler).Methods("POST")
 }

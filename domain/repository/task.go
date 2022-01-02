@@ -66,3 +66,11 @@ func UpdateTask(task *structs.Task, req *structs.Task) {
 	}
 	fmt.Println("success update task")
 }
+
+func DeleteTask(id string) {
+	var task structs.Task
+	if err := DB.Delete(&task, id); err != nil {
+		log.Println(err)
+	}
+	fmt.Println("success delete task")
+}

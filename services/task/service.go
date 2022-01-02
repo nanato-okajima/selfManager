@@ -95,3 +95,11 @@ func ParseToDateTime(str string) reflect.Value {
 	}
 	return reflect.ValueOf(t)
 }
+
+func TaskDeleteHandler(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	id := vars["id"]
+	fmt.Println(id)
+	repository.DeleteTask(id)
+	http.Redirect(w, r, "/tasks", http.StatusSeeOther)
+}
