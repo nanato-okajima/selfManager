@@ -5,7 +5,6 @@ import (
 	"log"
 	"net/http"
 	"reflect"
-	"strconv"
 	"text/template"
 	"time"
 
@@ -19,7 +18,11 @@ import (
 
 // TaskListHandler is select task
 func TaskListHandler(w http.ResponseWriter, r *http.Request) {
-	tasks := repository.FetchTaskList()
+	tasks, err := repository.FetchTaskList()
+	if err != nil {
+		log.Println(err)
+	}
+
 	tmp := template.Must(template.ParseFiles(constants.GetTaskDirPath("list"), constants.GetHeaderTemplate(), constants.GetFooterTemplate()))
 	if err := tmp.ExecuteTemplate(w, "list.gtpl", tasks); err != nil {
 		log.Println(err)
@@ -35,20 +38,24 @@ func NewTaskHandler(w http.ResponseWriter, r *http.Request) {
 
 // TaskCreateHandler is task insert db
 func CreateTaskHandler(w http.ResponseWriter, r *http.Request) {
-	status, err := strconv.ParseInt(r.FormValue("status"), 10, 64)
+	err := r.ParseForm()
+	if err != nil {
+		log.Println(err)
+	}
+
+	decorder := schema.NewDecoder()
+	decorder.RegisterConverter(time.Time{}, ParseToDateTime)
+
+	var req structs.Task
+	err = decorder.Decode(&req, r.PostForm)
 	if err != nil {
 		fmt.Println(err)
 	}
-	dueDatetime, err := time.Parse(constants.DATE_FORMAT, r.FormValue("due-datetime"))
+	err = repository.CreateTask(&req)
 	if err != nil {
-		fmt.Println(err)
+		log.Println(err)
 	}
-	pr := structs.Task{
-		Name:        r.FormValue("name"),
-		Status:      status,
-		DueDatetime: dueDatetime,
-	}
-	repository.CreateTask(&pr)
+
 	http.Redirect(w, r, "/tasks", http.StatusSeeOther)
 }
 
@@ -56,7 +63,11 @@ func CreateTaskHandler(w http.ResponseWriter, r *http.Request) {
 func TaskHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id := vars["id"]
-	task := repository.FetchTask(id)
+	task, err := repository.FetchTask(id)
+	if err != nil {
+		log.Println(err)
+	}
+
 	tmp := template.Must(template.ParseFiles(constants.GetTaskDirPath("edit"), constants.GetHeaderTemplate(), constants.GetFooterTemplate()))
 	if err := tmp.ExecuteTemplate(w, "edit.gtpl", task); err != nil {
 		log.Println(err)
@@ -66,25 +77,40 @@ func TaskHandler(w http.ResponseWriter, r *http.Request) {
 func UpdateTaskHandler(w http.ResponseWriter, r *http.Request) {
 	err := r.ParseForm()
 	if err != nil {
-		fmt.Println(err)
+		log.Println(err)
 	}
+
 	decorder := schema.NewDecoder()
-	// status, err := strconv.ParseInt(r.FormValue("status"), 10, 64)
-	// if err != nil {
-	// 	log.Println(err)
-	// }
 	decorder.RegisterConverter(time.Time{}, ParseToDateTime)
+
 	vars := mux.Vars(r)
 	id := vars["id"]
-	// id := strings.TrimPrefix(r.URL.Path, "/task/")
-	task := repository.FetchTask(id)
+	task, err := repository.FetchTask(id)
+	if err != nil {
+		log.Println(err)
+	}
+
 	var req structs.Task
-	fmt.Printf("%#v", r.PostForm)
 	err = decorder.Decode(&req, r.PostForm)
 	if err != nil {
-		fmt.Println(err)
+		log.Println(err)
 	}
-	repository.UpdateTask(task, &req)
+	err = repository.UpdateTask(task, &req)
+	if err != nil {
+		log.Println(err)
+	}
+
+	http.Redirect(w, r, "/tasks", http.StatusSeeOther)
+}
+
+func TaskDeleteHandler(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	id := vars["id"]
+	err := repository.DeleteTask(id)
+	if err != nil {
+		log.Println(err)
+	}
+
 	http.Redirect(w, r, "/tasks", http.StatusSeeOther)
 }
 
@@ -93,13 +119,6 @@ func ParseToDateTime(str string) reflect.Value {
 	if err != nil {
 		log.Println(err)
 	}
-	return reflect.ValueOf(t)
-}
 
-func TaskDeleteHandler(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	id := vars["id"]
-	fmt.Println(id)
-	repository.DeleteTask(id)
-	http.Redirect(w, r, "/tasks", http.StatusSeeOther)
+	return reflect.ValueOf(t)
 }
