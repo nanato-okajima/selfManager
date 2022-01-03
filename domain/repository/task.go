@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/joho/godotenv"
+	"github.com/pkg/errors"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 
@@ -34,22 +35,22 @@ func Migrate() {
 	if err != nil {
 		log.Println(err)
 	}
-	
+
 	fmt.Println("table create")
 }
 
 func FetchTaskList() (*[]structs.Task, error) {
 	var tasks []structs.Task
 	if err := DB.Order("updated_at desc").Find(&tasks).Error; err != nil {
-		return nil, err
+		return nil, errors.WithStack(err)
 	}
 
 	return &tasks, nil
 }
 
 func CreateTask(request *structs.Task) error {
-	if err := DB.Create(request); err != nil {
-		return err
+	if err := DB.Create(request).Error; err != nil {
+		return errors.WithStack(err)
 	}
 	fmt.Println("success create task")
 
@@ -58,16 +59,16 @@ func CreateTask(request *structs.Task) error {
 
 func FetchTask(id string) (*structs.Task, error) {
 	var task structs.Task
-	if err := DB.First(&task, id); err != nil {
-		return nil, err
+	if err := DB.First(&task, id).Error; err != nil {
+		return nil, errors.WithStack(err)
 	}
 
 	return &task, nil
 }
 
 func UpdateTask(task *structs.Task, req *structs.Task) error {
-	if err := DB.Model(task).Updates(req); err != nil {
-		return err
+	if err := DB.Model(task).Updates(req).Error; err != nil {
+		return errors.WithStack(err)
 	}
 	fmt.Println("success update task")
 
@@ -76,8 +77,8 @@ func UpdateTask(task *structs.Task, req *structs.Task) error {
 
 func DeleteTask(id string) error {
 	var task structs.Task
-	if err := DB.Delete(&task, id); err != nil {
-		return err
+	if err := DB.Delete(&task, id).Error; err != nil {
+		return errors.WithStack(err)
 	}
 	fmt.Println("success delete task")
 
