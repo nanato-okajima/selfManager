@@ -7,6 +7,7 @@ const (
 	FOOTER_FILE    = "_footer"
 	GTPL_EXTENSION = ".gtpl"
 	DATE_FORMAT    = "2006-01-02"
+	DSN            = "host=%s user=%s password=%s dbname=%s port=%s sslmode=disable TimeZone=Asia/Tokyo"
 )
 
 func GetTaskDirPath(filename string) string {
