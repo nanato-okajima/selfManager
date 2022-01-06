@@ -1,8 +1,14 @@
 package repository
 
-import "time"
+import (
+	"time"
+
+	"gorm.io/gorm"
+)
 
 type Task struct {
+	gorm.Model
 	Name        string
-	DueDatetime time.Time
+	Status      int64
+	DueDatetime time.Time `schema:"due-datetime"`
 }
