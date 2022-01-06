@@ -3,35 +3,47 @@ package repository
 import (
 	"fmt"
 	"log"
-	"os"
 
 	"github.com/joho/godotenv"
+	"github.com/kelseyhightower/envconfig"
 	"github.com/pkg/errors"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 
-	"selfManager/domain/structs"
+	"selfManager/constants"
 )
 
 var DB *gorm.DB
 
-func init() {
-	err := godotenv.Load()
-	if err != nil {
-		log.Println(err)
-	}
+type Env struct {
+	Host     string
+	TestHost string `envconfig:"TEST_HOST"`
+	User     string `envconfig:"POSTGRES_USER"`
+	Pass     string `envconfig:"POSTGRES_PASSWORD"`
+	DB       string `envconfig:"POSTGRES_DB"`
+	Port     string `envconfig:"POSTGRES_PORT"`
+	TestDB   string `envconfig:"TEST_POSTGRES_DB"`
+}
 
-	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=disable TimeZone=Asia/Tokyo", os.Getenv("HOST"), os.Getenv("POSTGRES_USER"), os.Getenv("POSTGRES_PASSWORD"), os.Getenv("POSTGRES_DB"), os.Getenv("POSTGRES_PORT"))
-	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
+var env Env
+
+func SetupDB() {
+	err := godotenv.Load("../../.env.test")
 	if err != nil {
 		log.Println(err)
 	}
-	DB = db
+	envconfig.Process("", &env)
+
+	dsn := fmt.Sprintf(constants.DSN, env.Host, env.User, env.Pass, env.DB, env.Port)
+	DB, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
+	if err != nil {
+		log.Println(err)
+	}
 }
 
 func Migrate() {
 	m := DB.Migrator()
-	err := m.AutoMigrate(&structs.Task{})
+	err := m.AutoMigrate(&Task{})
 	if err != nil {
 		log.Println(err)
 	}
@@ -39,16 +51,16 @@ func Migrate() {
 	fmt.Println("table create")
 }
 
-func FetchTaskList() (*[]structs.Task, error) {
-	var tasks []structs.Task
-	if err := DB.Order("updated_at desc").Find(&tasks).Error; err != nil {
+func FetchTaskList(db *gorm.DB) (*[]Task, error) {
+	var tasks []Task
+	if err := db.Order("updated_at desc").Find(&tasks).Error; err != nil {
 		return nil, errors.WithStack(err)
 	}
 
 	return &tasks, nil
 }
 
-func CreateTask(request *structs.Task) error {
+func CreateTask(request *Task) error {
 	if err := DB.Create(request).Error; err != nil {
 		return errors.WithStack(err)
 	}
@@ -57,8 +69,8 @@ func CreateTask(request *structs.Task) error {
 	return nil
 }
 
-func FetchTask(id string) (*structs.Task, error) {
-	var task structs.Task
+func FetchTask(id string) (*Task, error) {
+	var task Task
 	if err := DB.First(&task, id).Error; err != nil {
 		return nil, errors.WithStack(err)
 	}
@@ -66,7 +78,7 @@ func FetchTask(id string) (*structs.Task, error) {
 	return &task, nil
 }
 
-func UpdateTask(task *structs.Task, req *structs.Task) error {
+func UpdateTask(task *Task, req *Task) error {
 	if err := DB.Model(task).Updates(req).Error; err != nil {
 		return errors.WithStack(err)
 	}
@@ -76,7 +88,7 @@ func UpdateTask(task *structs.Task, req *structs.Task) error {
 }
 
 func DeleteTask(id string) error {
-	var task structs.Task
+	var task Task
 	if err := DB.Delete(&task, id).Error; err != nil {
 		return errors.WithStack(err)
 	}
