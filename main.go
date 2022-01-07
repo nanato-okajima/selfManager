@@ -21,7 +21,12 @@ func main() {
 		IdleTimeout:  120 * time.Second,
 		Handler:      r,
 	}
-	repository.Migrate()
+	if err := repository.SetupDB(".env.dev"); err != nil {
+		log.Fatal(err)
+	}
+	if err := repository.Migrate(); err != nil {
+		log.Fatal(err)
+	}
 	fmt.Println("Starting web server...")
 	log.Fatal(server.ListenAndServe())
 }

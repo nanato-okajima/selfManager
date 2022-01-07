@@ -2,7 +2,6 @@ package repository
 
 import (
 	"fmt"
-	"log"
 
 	"github.com/joho/godotenv"
 	"github.com/kelseyhightower/envconfig"
@@ -13,55 +12,47 @@ import (
 	"selfManager/constants"
 )
 
-var DB *gorm.DB
-
-type Env struct {
-	Host     string
-	TestHost string `envconfig:"TEST_HOST"`
-	User     string `envconfig:"POSTGRES_USER"`
-	Pass     string `envconfig:"POSTGRES_PASSWORD"`
-	DB       string `envconfig:"POSTGRES_DB"`
-	Port     string `envconfig:"POSTGRES_PORT"`
-	TestDB   string `envconfig:"TEST_POSTGRES_DB"`
-}
-
+var db DB
 var env Env
 
-func SetupDB() {
-	err := godotenv.Load("../../.env.test")
+func SetupDB(envPath string) error {
+	err := godotenv.Load(envPath)
 	if err != nil {
-		log.Println(err)
+		return err
 	}
 	envconfig.Process("", &env)
 
 	dsn := fmt.Sprintf(constants.DSN, env.Host, env.User, env.Pass, env.DB, env.Port)
-	DB, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
+	db.client, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
-		log.Println(err)
+		return err
 	}
+
+	return nil
 }
 
-func Migrate() {
-	m := DB.Migrator()
+func Migrate() error {
+	m := db.client.Migrator()
 	err := m.AutoMigrate(&Task{})
 	if err != nil {
-		log.Println(err)
+		return err
 	}
 
 	fmt.Println("table create")
+	return nil
 }
 
-func FetchTaskList(db *gorm.DB) (*[]Task, error) {
+func (db *DB) FetchTaskList() (*[]Task, error) {
 	var tasks []Task
-	if err := db.Order("updated_at desc").Find(&tasks).Error; err != nil {
+	if err := db.client.Order("updated_at desc").Find(&tasks).Error; err != nil {
 		return nil, errors.WithStack(err)
 	}
 
 	return &tasks, nil
 }
 
-func CreateTask(request *Task) error {
-	if err := DB.Create(request).Error; err != nil {
+func (db DB) CreateTask(request *Task) error {
+	if err := db.client.Create(request).Error; err != nil {
 		return errors.WithStack(err)
 	}
 	fmt.Println("success create task")
@@ -69,17 +60,17 @@ func CreateTask(request *Task) error {
 	return nil
 }
 
-func FetchTask(id string) (*Task, error) {
+func (db *DB) FetchTask(id string) (*Task, error) {
 	var task Task
-	if err := DB.First(&task, id).Error; err != nil {
+	if err := db.client.First(&task, id).Error; err != nil {
 		return nil, errors.WithStack(err)
 	}
 
 	return &task, nil
 }
 
-func UpdateTask(task *Task, req *Task) error {
-	if err := DB.Model(task).Updates(req).Error; err != nil {
+func (db *DB) UpdateTask(task *Task, req *Task) error {
+	if err := db.client.Model(task).Updates(req).Error; err != nil {
 		return errors.WithStack(err)
 	}
 	fmt.Println("success update task")
@@ -87,9 +78,9 @@ func UpdateTask(task *Task, req *Task) error {
 	return nil
 }
 
-func DeleteTask(id string) error {
+func (db *DB) DeleteTask(id string) error {
 	var task Task
-	if err := DB.Delete(&task, id).Error; err != nil {
+	if err := db.client.Delete(&task, id).Error; err != nil {
 		return errors.WithStack(err)
 	}
 	fmt.Println("success delete task")
