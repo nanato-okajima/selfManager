@@ -1,71 +1,35 @@
 package repository
 
 import (
-	"fmt"
 	"log"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/go-testfixtures/testfixtures/v3"
-	"github.com/joho/godotenv"
-	"github.com/kelseyhightower/envconfig"
 	"github.com/stretchr/testify/assert"
-	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
-
-	"selfManager/constants"
 )
 
-var (
-	TDB      *gorm.DB
-	fixtures *testfixtures.Loader
-)
+var fixtures *testfixtures.Loader
 
 func TestMain(m *testing.M) {
-	if err := setupDB(); err != nil {
+	var err error
+	if err = SetupDB("../../.env.test"); err != nil {
 		log.Fatal(err)
 	}
-	if err := prepareTestDatabase(); err != nil {
+	Migrate()
+
+	fixtures, err = newFixtures()
+	if err != nil {
 		log.Fatal(err)
 	}
 
 	os.Exit(m.Run())
 }
 
-func setupDB() error {
-	err := godotenv.Load("../../.env.test")
-	if err != nil {
-		log.Println(err)
-	}
-	envconfig.Process("", &env)
-
-	dsn := fmt.Sprintf(constants.DSN, env.Host, env.User, env.Pass, env.DB, env.Port)
-	TDB, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
-	if err != nil {
-		return err
-	}
-
-	migrate()
-	fixtures, err = newFixtures()
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func migrate() {
-	m := TDB.Migrator()
-	err := m.AutoMigrate(&Task{})
-	if err != nil {
-		log.Println(err)
-	}
-
-	fmt.Println("table create")
-}
-
 func newFixtures() (*testfixtures.Loader, error) {
-	DB, _ := TDB.DB()
+	DB, _ := db.client.DB()
 	return testfixtures.New(
 		testfixtures.Database(DB),
 		testfixtures.Dialect("postgres"),
@@ -81,6 +45,10 @@ func prepareTestDatabase() error {
 }
 
 func TestFetchTaskList(t *testing.T) {
+	if err := prepareTestDatabase(); err != nil {
+		t.FailNow()
+	}
+
 	tests := []struct {
 		name string
 		err  error
@@ -95,9 +63,160 @@ func TestFetchTaskList(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := FetchTaskList(TDB)
-			assert.NoError(t, err, "")
-			assert.Equal(t, tt.want, got)
+			got, err := db.FetchTaskList()
+			if assert.NoError(t, err) {
+				assert.Equal(t, tt.want, got)
+			}
+		})
+	}
+}
+
+func TestCreateTask(t *testing.T) {
+	if err := prepareTestDatabase(); err != nil {
+		t.FailNow()
+	}
+
+	tests := []struct {
+		name    string
+		err     error
+		request *Task
+	}{
+		{
+			name: "成功/新規登録",
+			err:  nil,
+			request: &Task{
+				Model: gorm.Model{
+					ID:        3,
+					CreatedAt: time.Date(2022, time.January, 1, 0, 0, 0, 0, time.Local),
+					UpdatedAt: time.Date(2022, time.January, 1, 0, 0, 0, 0, time.Local),
+					DeletedAt: *new(gorm.DeletedAt),
+				},
+				Name:        "test3",
+				Status:      3,
+				DueDatetime: time.Date(2022, time.January, 1, 0, 0, 0, 0, time.Local),
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := db.CreateTask(tt.request)
+			if !assert.NoError(t, err) {
+				t.FailNow()
+			}
+		})
+	}
+}
+
+func TestFetchTask(t *testing.T) {
+	if err := prepareTestDatabase(); err != nil {
+		t.FailNow()
+	}
+
+	tests := []struct {
+		name string
+		err  error
+		id   string
+		want *Task
+	}{
+		{
+			name: "成功/1件取得",
+			err:  nil,
+			id:   "1",
+			want: &Task{
+				Model: gorm.Model{
+					ID:        1,
+					CreatedAt: time.Date(2022, time.January, 1, 0, 0, 0, 0, time.Local),
+					UpdatedAt: time.Date(2022, time.January, 1, 0, 0, 0, 0, time.Local),
+					DeletedAt: *new(gorm.DeletedAt),
+				},
+				Name:        "test1",
+				Status:      1,
+				DueDatetime: time.Date(2022, time.January, 1, 0, 0, 0, 0, time.Local),
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := db.FetchTask(tt.id)
+			if assert.NoError(t, err) {
+				assert.Equal(t, tt.want, got)
+			}
+		})
+	}
+}
+
+func TestUpdateTask(t *testing.T) {
+	if err := prepareTestDatabase(); err != nil {
+		t.FailNow()
+	}
+
+	tests := []struct {
+		name    string
+		err     error
+		request struct {
+			task *Task
+			req  *Task
+		}
+	}{
+		{
+			name: "成功/タスク変更",
+			err:  nil,
+			request: struct {
+				task *Task
+				req  *Task
+			}{
+				task: &Task{
+					Model: gorm.Model{
+						ID: 1,
+					},
+				},
+				req: &Task{
+					Model: gorm.Model{
+						ID: 4,
+					},
+					Name:        "testhoge",
+					Status:      2,
+					DueDatetime: time.Date(2022, time.March, 3, 0, 0, 0, 0, time.Local),
+				},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := db.UpdateTask(tt.request.task, tt.request.req)
+			if !assert.NoError(t, err) {
+				t.FailNow()
+			}
+		})
+	}
+}
+
+func TestDeleteTask(t *testing.T) {
+	if err := prepareTestDatabase(); err != nil {
+		log.Fatal(err)
+	}
+
+	tests := []struct {
+		name string
+		err  error
+		id   string
+	}{
+		{
+			name: "成功/タスク削除",
+			err:  nil,
+			id:   "2",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := db.DeleteTask(tt.id)
+			if !assert.NoError(t, err) {
+				t.FailNow()
+			}
 		})
 	}
 }
