@@ -7,7 +7,9 @@
     <div>
         <label for="status">ステータス</label>
         <select name="status" id="status">
-            <option value="1">未着手</option>
+            <option value="0">未着手</option>
+            <option value="1">着手</option>
+            <option value="2">完了</option>
         </select>
     </div>
     <div>
