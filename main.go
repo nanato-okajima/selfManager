@@ -8,12 +8,20 @@ import (
 
 	"github.com/gorilla/mux"
 
-	"selfManager/domain/repository"
+	"selfManager/config"
+	"selfManager/handler"
+	"selfManager/infrastructure/persistence"
+	"selfManager/usecase/task"
 )
 
 func main() {
+	config.SetEnv(".env.dev")
+	taskPersistence := persistence.NewTaskPersistence(config.Connect())
+	taskUseCase := task.NewTaskUseCase(taskPersistence)
+	taskHandler := handler.NewTaskHandler(taskUseCase)
+
 	r := mux.NewRouter()
-	routeSetting(r)
+	routeSetting(r, taskHandler)
 	server := http.Server{
 		Addr:         ":8000",
 		ReadTimeout:  5 * time.Second,
@@ -21,12 +29,7 @@ func main() {
 		IdleTimeout:  120 * time.Second,
 		Handler:      r,
 	}
-	if err := repository.SetupDB(".env.dev"); err != nil {
-		log.Fatal(err)
-	}
-	if err := repository.Migrate(); err != nil {
-		log.Fatal(err)
-	}
+
 	fmt.Println("Starting web server...")
 	log.Fatal(server.ListenAndServe())
 }

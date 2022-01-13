@@ -3,14 +3,14 @@ package main
 import (
 	"github.com/gorilla/mux"
 
-	"selfManager/services/task"
+	"selfManager/handler"
 )
 
-func routeSetting(mux *mux.Router) {
-	mux.HandleFunc("/tasks", task.TaskListHandler).Methods("GET")
-	mux.HandleFunc("/task/create", task.NewTaskHandler).Methods("GET")
-	mux.HandleFunc("/task/create", task.CreateTaskHandler).Methods("POST")
-	mux.HandleFunc("/task/{id:[0-9]+}", task.TaskHandler).Methods("GET")
-	mux.HandleFunc("/task/{id:[0-9]+}", task.UpdateTaskHandler).Methods("POST")
-	mux.HandleFunc("/task/delete/{id:[0-9]+}", task.DeleteTaskHandler).Methods("POST")
+func routeSetting(mux *mux.Router, taskHandler handler.TaskHandler) {
+	mux.HandleFunc("/tasks", taskHandler.Index).Methods("GET")
+	mux.HandleFunc("/task/create", taskHandler.New).Methods("GET")
+	mux.HandleFunc("/task/create", taskHandler.Create).Methods("POST")
+	mux.HandleFunc("/task/{id:[0-9]+}", taskHandler.Show).Methods("GET")
+	mux.HandleFunc("/task/{id:[0-9]+}", taskHandler.Update).Methods("POST")
+	mux.HandleFunc("/task/delete/{id:[0-9]+}", taskHandler.Delete).Methods("POST")
 }

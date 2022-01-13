@@ -1,6 +1,6 @@
 FROM golang:1.17.5-alpine3.15
 
-WORKDIR /go/src/github.com/
+WORKDIR /go/src/github.com/selfManager
 
 RUN apk update &&\
     apk upgrade &&\
