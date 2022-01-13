@@ -64,7 +64,7 @@ func (th *taskHandler) Create(w http.ResponseWriter, r *http.Request) {
 		log.Printf("%+v", err)
 	}
 
-	if _, err := th.taskUseCase.Create(&req); err != nil {
+	if err := th.taskUseCase.Create(&req); err != nil {
 		log.Printf("%+v", err)
 	}
 

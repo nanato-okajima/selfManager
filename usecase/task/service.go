@@ -11,7 +11,7 @@ import (
 
 type TaskUseCase interface {
 	FetchList() (*[]model.Task, error)
-	Create(*Request) (*model.Task, error)
+	Create(*Request) error
 	Find(string) (*model.Task, error)
 	Update(string, *Request) error
 	Delete(string) error
@@ -42,7 +42,7 @@ func (tu *taskUseCase) FetchList() (*[]model.Task, error) {
 	return tasks, nil
 }
 
-func (tu *taskUseCase) Create(req *Request) (*model.Task, error) {
+func (tu *taskUseCase) Create(req *Request) error {
 	task := model.Task{
 		Name:        req.Name,
 		Status:      req.Status,
@@ -50,10 +50,10 @@ func (tu *taskUseCase) Create(req *Request) (*model.Task, error) {
 	}
 	err := tu.taskRepository.Create(&task)
 	if err != nil {
-		return nil, errors.WithStack(err)
+		return errors.WithStack(err)
 	}
 
-	return &task, nil
+	return nil
 }
 
 func (tu *taskUseCase) Find(id string) (*model.Task, error) {

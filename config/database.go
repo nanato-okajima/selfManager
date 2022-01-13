@@ -16,13 +16,11 @@ import (
 var env Env
 
 type Env struct {
-	Host     string
-	TestHost string `envconfig:"TEST_HOST"`
-	User     string `envconfig:"POSTGRES_USER"`
-	Pass     string `envconfig:"POSTGRES_PASSWORD"`
-	DB       string `envconfig:"POSTGRES_DB"`
-	Port     string `envconfig:"POSTGRES_PORT"`
-	TestDB   string `envconfig:"TEST_POSTGRES_DB"`
+	Host string
+	User string `envconfig:"POSTGRES_USER"`
+	Pass string `envconfig:"POSTGRES_PASSWORD"`
+	DB   string `envconfig:"POSTGRES_DB"`
+	Port string `envconfig:"POSTGRES_PORT"`
 }
 
 func Connect() *gorm.DB {
