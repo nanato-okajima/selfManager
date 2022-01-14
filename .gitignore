@@ -13,5 +13,13 @@
 
 # Dependency directories (remove the comment below to include it)
 # vendor/
+<<<<<<< Updated upstream
 .env
+=======
+.env.dev
+.env.tes
+
+/tmp
+
+>>>>>>> Stashed changes
 postgres_data/
