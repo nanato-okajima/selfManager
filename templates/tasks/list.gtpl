@@ -7,5 +7,4 @@
             <input type="submit" value="削除">
         </form>
     {{ end }}
-    <p></p>
 {{template "footer" .}}
