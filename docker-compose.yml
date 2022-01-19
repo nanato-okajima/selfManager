@@ -4,21 +4,32 @@ services:
     build:
       context: .
       dockerfile: ./Dockerfile
+      target: prod
+    tty: true
+    env_file:
+      - .env.dev
     ports:
       - 8000:8000
-    depends_on:
-      - db
     volumes:
-      - .:/go/src/github.com/selfManager
+      - .:/go/src
+    depends_on:
+        db:
+          condition: service_healthy
   db:
     image: postgres:14.1-alpine
     restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
     env_file:
       - .env.dev
     ports:
       - 55432:5432
     volumes:
-      - ./postgres_data:/var/lib/postgresql/data
+      - ./postgres_data:/var/lib/postgresql
   testdb:
     image: postgres:14.1-alpine
     restart: always
