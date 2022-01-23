@@ -23,7 +23,7 @@ func main() {
 	r := mux.NewRouter()
 	routeSetting(r, taskHandler)
 	server := http.Server{
-		Addr:         ":8000",
+		Addr:         ":80",
 		ReadTimeout:  5 * time.Second,
 		WriteTimeout: 10 * time.Second,
 		IdleTimeout:  120 * time.Second,

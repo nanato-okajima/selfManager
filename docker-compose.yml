@@ -1,11 +1,11 @@
 version: '3.8'
 services:
   app:
+    container_name: "self_manager_app"
     build:
       context: .
       dockerfile: ./Dockerfile
       target: prod
-    tty: true
     env_file:
       - .env.dev
     ports:
