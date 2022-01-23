@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/joho/godotenv"
 	"github.com/kelseyhightower/envconfig"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -48,10 +47,6 @@ func migrate(db *gorm.DB) error {
 }
 
 func SetEnv(path string) error {
-	err := godotenv.Load(path)
-	if err != nil {
-		return err
-	}
 	envconfig.Process("", &env)
 	return nil
 }
