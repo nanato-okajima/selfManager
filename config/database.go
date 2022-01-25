@@ -9,7 +9,6 @@ import (
 	"gorm.io/gorm"
 
 	"selfManager/constants"
-	"selfManager/domain/model"
 )
 
 var env Env
@@ -29,21 +28,7 @@ func Connect() *gorm.DB {
 		log.Fatal(err)
 	}
 
-	err = migrate(db)
-	if err != nil {
-		log.Fatal(err)
-	}
-
 	return db
-}
-
-func migrate(db *gorm.DB) error {
-	if err := db.AutoMigrate(model.Task{}); err != nil {
-		return err
-	}
-
-	fmt.Println("table create")
-	return nil
 }
 
 func SetEnv(path string) error {
