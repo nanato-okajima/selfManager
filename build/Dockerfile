@@ -7,7 +7,7 @@ RUN apk update &&\
 COPY go.mod go.sum ./
 RUN go mod download
 RUN go install github.com/cosmtrek/air@latest
-COPY .air.toml .
+COPY build/.air.toml .
 
 CMD ["air", "-c", ".air.toml"]
 
